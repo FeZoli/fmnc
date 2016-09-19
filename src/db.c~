@@ -1,6 +1,0 @@
-#include <db.h>
-
-ERROR_CODE load_db()
-{
-
-}
