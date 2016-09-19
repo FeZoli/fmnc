@@ -1,0 +1,22 @@
+#ifndef _DB_H_
+#define _DB_H_
+
+#include <my_global.h>
+#include <mysql.h>
+
+
+#define MAX_LEN_OF_DB_DATA_STRING 64
+
+static MYSQL* DB;
+
+struct DBConnectData
+{
+  char host[MAX_LEN_OF_DB_DATA_STRING];
+  char name[MAX_LEN_OF_DB_DATA_STRING];
+  char user[MAX_LEN_OF_DB_DATA_STRING];
+  char pass[MAX_LEN_OF_DB_DATA_STRING];
+  char socket[MAX_LEN_OF_DB_DATA_STRING];
+  int port;
+};
+
+#endif

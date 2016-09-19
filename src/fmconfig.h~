@@ -1,0 +1,20 @@
+#ifndef _FMCONFIG_H_
+#define _FMCONFIG_H_
+
+enum ERROR_CODES
+{
+  SUCCESS_NO_ERROR,
+  ERROR_INIFILE_OPEN_FAILED,
+  ERROR_INIFILE_READ_FAILED,
+  ERROR_DB_CONNECTION_FAILED,
+};
+
+typedef int ERROR_CODE;
+
+ERROR_CODE init_fmnc();
+ERROR_CODE exit_fmnc();
+
+
+
+
+#endif

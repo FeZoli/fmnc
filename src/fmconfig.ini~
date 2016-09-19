@@ -1,0 +1,7 @@
+dbtype=mysql
+dbhost=127.0.0.1
+dbname=foodmaster
+dbuser=minux
+dbpass=nemerdekel
+dbport=3306
+dbsock=

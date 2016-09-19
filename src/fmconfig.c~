@@ -1,0 +1,168 @@
+#include <stdio.h>
+#include <string.h>
+
+#include <fmconfig.h>
+#include <db.h>
+
+
+const char* inifile_name = "fmconfig.ini";
+static struct DBConnectData connect_data;
+static MYSQL* DB;
+
+
+ERROR_CODE parse_line_and_store_data(char* line)
+{
+  ERROR_CODE retval = SUCCESS_NO_ERROR; 
+  char* token;
+
+  if (NULL != (token = strsep(&line, "=")))
+    {
+      if (0 == strcmp("dbname", token))
+	{
+	  if (NULL != (token = strsep(&line, "\n")))
+	    {
+	      strncpy(connect_data.name, token, MAX_LEN_OF_DB_DATA_STRING); 
+	    }
+	}
+      else if (0 == strcmp("dbhost", token))
+	{
+	  if (NULL != (token = strsep(&line, "\n")))
+	    {
+	      strncpy(connect_data.host, token, MAX_LEN_OF_DB_DATA_STRING); 
+	    }
+	}
+      else if (0 == strcmp("dbuser", token))
+	{
+	  if (NULL != (token = strsep(&line, "\n")))
+	    {
+	      strcpy(connect_data.user, token); 
+	    }
+	}
+      else if (0 == strcmp("dbpass", token))
+	{
+	  if (NULL != (token = strsep(&line, "\n")))
+	    {
+	      strncpy(connect_data.pass, token, MAX_LEN_OF_DB_DATA_STRING); 
+	    }
+	}
+      else if (0 == strcmp("dbport", token))
+	{
+	  if (NULL != (token = strsep(&line, "\n")))
+	    {
+	      connect_data.port = atoi(token);
+	    }
+	}
+      else if (0 == strcmp("dbsock", token))
+	{
+	  if (NULL != (token = strsep(&line, "\n")))
+	    {
+	      strncpy(connect_data.socket, token, MAX_LEN_OF_DB_DATA_STRING); 
+	    }
+	}
+    }
+  return retval;
+}
+
+
+ERROR_CODE load_ini()
+{
+  ERROR_CODE retval = SUCCESS_NO_ERROR;
+  FILE* inifile = NULL;
+  inifile = fopen(inifile_name, "r");
+  char* p_line = NULL;
+  size_t line_max_len = 25;
+
+  if (NULL == inifile)
+    {
+      fprintf(stderr, "Inifile %s could not be opened. Exiting.\n", inifile_name);
+      retval = ERROR_INIFILE_OPEN_FAILED;
+    }
+  
+  while ( -1 != getline(&p_line, &line_max_len, inifile))
+    {
+      printf("Line: %s", p_line);
+      if (0 < strlen(p_line))
+	parse_line_and_store_data(p_line);
+    }
+  
+  fclose(inifile);
+		    
+  return retval; 
+}
+
+
+ERROR_CODE connect_db()
+{
+  ERROR_CODE retval = SUCCESS_NO_ERROR;
+
+  DB = mysql_init(NULL);
+
+  if (mysql_real_connect(DB,
+			 connect_data.host,
+			 connect_data.user,
+			 connect_data.pass,
+			 connect_data.name,
+			 connect_data.port,
+			 connect_data.socket, 0) == NULL)
+    {
+      fprintf(stderr, "Failed to connect database. Error message: \n%s\n",
+	      mysql_error(DB));
+      mysql_close(DB);
+      retval = ERROR_DB_CONNECTION_FAILED;
+    }
+
+  if (mysql_query(DB, "select * from sales_order")) 
+    {
+      printf("Rossz query\n");
+      retval = 999;
+    }
+  
+  MYSQL_RES *result = mysql_store_result(DB);
+  
+  if (result == NULL) 
+  {
+    retval = 999;
+  }
+
+  int num_fields = mysql_num_fields(result);
+
+  MYSQL_ROW row;
+  
+  while ((row = mysql_fetch_row(result))) 
+  { 
+      for(int i = 0; i < num_fields; i++) 
+      { 
+          printf("%s ", row[i] ? row[i] : "NULL"); 
+      } 
+          printf("\n"); 
+  }
+  
+  mysql_free_result(result);
+
+  return retval;
+}
+
+
+ERROR_CODE init_fmnc()
+{
+  ERROR_CODE retval = SUCCESS_NO_ERROR;
+
+  retval = load_ini();
+  if (SUCCESS_NO_ERROR != retval) return retval;
+
+  retval = connect_db();
+  if (SUCCESS_NO_ERROR != retval) return retval;
+
+  return retval;
+}
+
+
+ERROR_CODE exit_fmnc()
+{
+  if (NULL != DB)
+    {
+      mysql_close(DB);
+    }
+  
+  return SUCCESS_NO_ERROR;
+}
